@@ -61,7 +61,7 @@
         var layer_HereWegoTerrain_0 = L.tileLayer.wms('https://orthos.its.ny.gov/ArcGIS/services/wms/Latest/MapServer/WMSServer', {
             layers: '2',
             pane: 'pane_HereWegoTerrain_0',
-            opacity: 1.0,
+            opacity: 0.7,
             attribution: 'Basemap imagery from <a href="https://gis.ny.gov/orthoimagery">New York State</a>',
             minZoom: 15,
             maxZoom: 21,
@@ -77,30 +77,31 @@
 <i>{{botanic}}</i><br>
 Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
 `
-        let genuscolor = {
-            'acer':        '#f88',
-            'amelanchier': '#ff4',
-            'cercis':      '#cc0',
-            'cornus':      '#f00',
-            'gleditsia':   '#080',
-            'malus':       '#44f',
-            'picea':       '#4f4',
-            'pinus':       '#8f4',
-            'platanus':    '#808',
-            'quercus':     '#4cf',
-            'tsuga':       '#840'
+        let gcolor = {
+            'acer':        '#a6cee3',
+            'quercus':     '#1f78b4',
+            'pinus':       '#b2df8a',
+            'picea':       '#33a02c',
+            'malus':       '#fb9a99',
+            'cornus':      '#e31a1c',
+            'amelanchier': '#fdbf6f',
+            'cercis':      '#ff7f00',
+            'gleditsia':   '#cab2d6',
+            'platanus':    '#6a3d9a',
+            'prunus':      '#ffff99',
+            'thuja':       '#b15928'
         }
         function style_compost_facility_survey_responses_1_2_0(feature) {
             let c = '#000'
             let genus = feature.properties['botanic'].split(' ')[0].toLowerCase()
-            if (genuscolor[genus]) {
-                c = genuscolor[genus]
+            if (gcolor[genus]) {
+                c = gcolor[genus]
             }
             return {
                 pane: 'pane_compost_facility_survey_responses_1_2',
                 radius: Math.pow(feature.properties['dbh'], 0.6) + 3,
                 opacity: 1,
-                color: '#fff',
+                color: '#000',
                 fillColor: c,
                 dashArray: '',
                 lineCap: 'butt',
@@ -142,14 +143,12 @@ Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
                       .on('mouseover', function () {
                         this.move
                         this.setStyle({
-                            weight: 3,
-                            color: '#000'
+                            color: '#fff'
                         })
                       })
                       .on('mouseout', function () {
                         this.setStyle({
-                            weight: 1.5,
-                            color: '#fff'
+                            color: '#000'
                         })
                       })
                   }
