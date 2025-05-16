@@ -74,15 +74,11 @@ html, body, #map {
 
 .leaflet-tooltip {
     background: rgba(255, 255, 255, 1.0) !important;
-    box-shadow: 4px 4px 8px 4px rgba(0, 0, 0, 1.0);
     border: none;
 }
 .leaflet-tooltip h3 {
     font-weight: bold;
     margin: 0;
-}
-.leaflet-tooltip h4 {
-    margin: 0.5em 0 0;
 }
 .leaflet-tooltip p {
     margin: 0;
