@@ -107,8 +107,7 @@ Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
                 lineJoin: 'miter',
                 weight: 1.5,
                 fill: true,
-                fillOpacity: 1,
-                interactive: true,
+                fillOpacity: 1
             }
         }
         map.createPane('pane_compost_facility_survey_responses_1_2');
@@ -140,6 +139,19 @@ Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
                         offset: L.point(0, -8),
                         opacity: 1.0
                       })
+                      .on('mouseover', function () {
+                        this.move
+                        this.setStyle({
+                            weight: 3,
+                            color: '#000'
+                        })
+                      })
+                      .on('mouseout', function () {
+                        this.setStyle({
+                            weight: 1.5,
+                            color: '#fff'
+                        })
+                      })
                   }
                 })
                 map.addLayer(gs_layer)
@@ -150,6 +162,13 @@ Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
               }
             })
         }
+
+        map.on('tooltipopen', (e) => {
+            console.log(e)
+        })
+        map.on('tooltipclose', (e) => {
+            console.log(e.target, 'closed')
+        })
         </script>
     </body>
 </html>
