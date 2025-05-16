@@ -62,7 +62,7 @@
             layers: '2',
             pane: 'pane_HereWegoTerrain_0',
             opacity: 0.7,
-            attribution: 'Basemap imagery from <a href="https://gis.ny.gov/orthoimagery">New York State</a>',
+            attribution: 'Basemap imagery (2023) from <a href="https://gis.ny.gov/orthoimagery">New York State</a>',
             minZoom: 15,
             maxZoom: 21,
             minNativeZoom: 15,
@@ -77,6 +77,7 @@
 <i>{{botanic}}</i><br>
 Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
 `
+        // define colors for the top 12 genus names
         let gcolor = {
             'acer':        '#a6cee3',
             'quercus':     '#1f78b4',
@@ -92,11 +93,9 @@ Trunk diameter: {{dbh}} inches<br> ({{yearinv}})
             'thuja':       '#b15928'
         }
         function style_compost_facility_survey_responses_1_2_0(feature) {
-            let c = '#000'
+            // default to gray if no color is defined for the genus name
             let genus = feature.properties['botanic'].split(' ')[0].toLowerCase()
-            if (gcolor[genus]) {
-                c = gcolor[genus]
-            }
+            let c = gcolor[genus] || '#888888'
             return {
                 pane: 'pane_compost_facility_survey_responses_1_2',
                 radius: Math.pow(feature.properties['dbh'], 0.6) + 3,
