@@ -89,14 +89,14 @@
             let genus = feature.properties['botanic'].split(' ')[0].toLowerCase()
             let c = gcolor[genus] || '#888888'
             return {
-                radius: Math.pow(feature.properties['dbh'], 0.6) + 3,
+                radius: (Math.pow(feature.properties['dbh'], 0.6) || 1) + 3,
                 opacity: 1,
                 color: '#000',
                 fillColor: c,
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
-                weight: 1.5,
+                weight: 1,
                 fill: true,
                 fillOpacity: 1
             }
@@ -107,7 +107,7 @@
         loadCSV();
 
         function loadCSV() {
-          url = 'data/trees.csv'
+          url = 'data/trees-2019.csv'
           fetch(url)
             .then((response) => {
               if (response.ok) response.text().then((csvtext) => {
@@ -115,6 +115,7 @@
                 csvtext += '\n'
                 csv_layer = L.geoCsv(csvtext, {
                   attribution: 'Tree data from <a href="https://cugir.library.cornell.edu/catalog/cugir-009100">CUGIR</a>',
+                  minZoom: 19,
                   firstLineTitles: true,
                   fieldSeparator: ',',
                   longitudeTitle: 'longitude',
@@ -129,7 +130,6 @@
                       })
                       // highlight point on hover
                       .on('mouseover', function () {
-                        this.move
                         this.setStyle({
                             color: '#fff'
                         })
@@ -142,9 +142,19 @@
                   }
                 })
                 map.addLayer(csv_layer)
+                map.on('zoomend', function() {
+                  // thinner stroke when zoomed out, so we can still see the color
+                  csv_layer.eachLayer((f) => {
+                    let z = map.getZoom()
+                    let r = (3 + Math.pow(f.feature.properties['dbh'], 0.7) || 1) * Math.pow(1.6, z - 18)
+                    f.setStyle({
+                      radius: r
+                    })
+                  })
+                })
               })
               else {
-                console.log(response)
+                console.log('error loading csv data', response)
               }
             })
         }
