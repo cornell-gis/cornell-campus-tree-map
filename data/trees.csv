@@ -1,4 +1,4 @@
-x,y,treeid,botanic,common,yearinv,dbh
+longitude,latitude,treeid,botanic,common,yearinv,dbh
 -76.480705,42.453311,1,Gleditsia triacanthos,Honeylocust,2019,17
 -76.480582,42.453374,2,Tilia cordata,Littleleaf Linden,2019,21
 -76.480641,42.453431,3,Gleditsia triacanthos,Honeylocust,2019,19
