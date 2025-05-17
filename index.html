@@ -16,40 +16,48 @@
         <script src="js/leaflet.js"></script>
         <script src="js/leaflet.geocsv.js"></script>
         <script src="js/mustache-4.2.0.min.js"></script>
+        <script src="js/leaflet-hash.js"></script>
         <script>
         var map = L.map('map', {
-            preferCanvas: false,
+            preferCanvas: true,
             zoomControl:false,
             maxZoom:21,
             minZoom:15
-        }).fitBounds([[42.447,-76.480],[42.450,-76.476]]); // initial view of Ag Quad
-        map.attributionControl.setPrefix('');
+        })
+        map.attributionControl.setPrefix('')
 
+        if (! location.hash) {
+            // default to view of Ag Quad
+            map.fitBounds([[42.447,-76.480],[42.450,-76.476]])  
+        }
+
+        // add current extent to the URL hash
+        let hash = new L.Hash(map)
 
         // add map title and description
-        var title = new L.Control({'position':'topleft'});
+        var title = new L.Control({'position':'topleft'})
         title.onAdd = function (map) {
-            this._div = L.DomUtil.create('div', 'info');
-            this.update();
-            return this._div;
-        };
+            this._div = L.DomUtil.create('div', 'info')
+            this.update()
+            return this._div
+        }
         title.update = function () {
             this._div.innerHTML = `
             <h2>Cornell Campus Tree Map</h2>
             <p>This map is based on data from the <a target="_blank" href="https://cugir.library.cornell.edu/catalog/cugir-009100">2019 Campus Tree Inventory</a>.</p>
             <p>Point colors indicate the genus of the tree. (Legend forthcoming...)</p>
-            `;
-        };
-        title.addTo(map);
+            `
+        }
+        title.addTo(map)
         
         // add zoom controller
         var zoomControl = L.control.zoom({
             position: 'topleft'
-        }).addTo(map);
+        }).addTo(map)
 
         // basemap
-        map.createPane('pane_nys_2023');
-        map.getPane('pane_nys_2023').style.zIndex = 400;
+        map.createPane('pane_nys_2023')
+        map.getPane('pane_nys_2023').style.zIndex = 400
         var layer_nys_2023 = L.tileLayer.wms('https://orthos.its.ny.gov/ArcGIS/services/wms/Latest/MapServer/WMSServer', {
             layers: '2',
             pane: 'pane_nys_2023',
@@ -59,8 +67,8 @@
             maxZoom: 21,
             minNativeZoom: 15,
             maxNativeZoom: 19
-        });
-        map.addLayer(layer_nys_2023);
+        })
+        map.addLayer(layer_nys_2023)
 
         // mustache template for the info displayed when hovering over a tree
         let trees_tooltip_template = `
@@ -84,19 +92,26 @@
             'prunus':      '#ffff99',
             'thuja':       '#b15928'
         }
+
+        function calcRadius(dbh) {
+            // try to optimize point radius for different zoom levels
+            let z = map.getZoom()
+            return (Math.pow(dbh, 0.4) || 1) * Math.pow(2, (z - 15)*0.7) * 0.5
+        }
+
         function style_trees(feature) {
             // default to gray if no color is defined for the genus name
             let genus = feature.properties['botanic'].split(' ')[0].toLowerCase()
             let c = gcolor[genus] || '#888888'
             return {
-                radius: (Math.pow(feature.properties['dbh'], 0.6) || 1) + 3,
+                radius: calcRadius(feature.properties['dbh']),
                 opacity: 1,
                 color: '#000',
                 fillColor: c,
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
-                weight: 1,
+                weight: 0.5,
                 fill: true,
                 fillOpacity: 1
             }
@@ -104,7 +119,7 @@
 
         let csv_layer
 
-        loadCSV();
+        loadCSV()
 
         function loadCSV() {
           url = 'data/trees-2019.csv'
@@ -130,13 +145,16 @@
                       })
                       // highlight point on hover
                       .on('mouseover', function () {
+                        console.log(this.feature.properties.dbh, this.options.radius)
                         this.setStyle({
-                            color: '#fff'
+                            color: '#fff',
+                            weight: 1
                         })
                       })
                       .on('mouseout', function () {
                         this.setStyle({
-                            color: '#000'
+                            color: '#000',
+                            weight: 0.5
                         })
                       })
                   }
@@ -145,13 +163,12 @@
                 map.on('zoomend', function() {
                   // thinner stroke when zoomed out, so we can still see the color
                   csv_layer.eachLayer((f) => {
-                    let z = map.getZoom()
-                    let r = (3 + Math.pow(f.feature.properties['dbh'], 0.7) || 1) * Math.pow(1.6, z - 18)
                     f.setStyle({
-                      radius: r
+                      radius: calcRadius(f.feature.properties['dbh'])
                     })
                   })
                 })
+                map.setZoom(19)
               })
               else {
                 console.log('error loading csv data', response)
