@@ -19,6 +19,7 @@
         <script>
         let csv_layer
         let query = ''
+        let orighash = location.hash
         let map = L.map('map', {
             zoomControl:false, // we'll add it below, after the title
             maxZoom:21,
@@ -29,6 +30,8 @@
         map.attributionControl.setPrefix('')
 
 // also add layer switcher button like GRE localhost
+
+
 
         map.on('hashmetainit', function(state) {
             if (state.meta.length > 0) {
@@ -203,6 +206,9 @@
                     //map.setZoom(19)
                     
                     // check for query
+                    if (orighash.match(/^#\w.*$/)) {
+                        query = orighash.substr(1)
+                    }
                     if (query) {
                         document.getElementById('q').value = decodeURIComponent(query).replace(/\+/g, ' ')
                         searchq()
@@ -215,7 +221,9 @@
         }
 
         function searchq() {
-            let q = document.getElementById('q').value
+            let qel = document.getElementById('q')
+            let q = qel.value.trim()
+            qel.value = q
             hash.setHashMeta([q.replace(/[^\w\s]+/g, '')])
             if (q.length > 0 || 1) {
                 let count = 0

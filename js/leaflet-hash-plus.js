@@ -1,3 +1,10 @@
+// leaflet-hash-plus.js
+// from https://github.com/gregrobson/leaflet-hash-plus/
+//
+// local modifications by kgjenkins:
+// - commented out console.log() statements
+// - updated .formatHash() to use + instead of %20 for spaces
+
 (function(window) {
   L.Hash = function(map, promise) {
     this.map = map;
