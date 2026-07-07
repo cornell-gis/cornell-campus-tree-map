@@ -15,20 +15,26 @@
         <script src="js/leaflet.js"></script>
         <script src="js/leaflet.geocsv.js"></script>
         <script src="js/mustache-4.2.0.min.js"></script>
-        <script src="js/leaflet-hash.js"></script>
+        <script src="js/leaflet-hash-plus.js"></script>
         <script>
         let csv_layer
-        var map = L.map('map', {
+        let query = ''
+        let map = L.map('map', {
             zoomControl:false, // we'll add it below, after the title
             maxZoom:21,
-            minZoom:15
+            minZoom:14
         })
+        // default to view of Ag Quad
+        map.setView([42.45, -76.48], 16)
         map.attributionControl.setPrefix('')
 
-        if (! location.hash) {
-            // default to view of Ag Quad
-            map.fitBounds([[42.447,-76.480],[42.450,-76.476]])
-        }
+// also add layer switcher button like GRE localhost
+
+        map.on('hashmetainit', function(state) {
+            if (state.meta.length > 0) {
+                query = state.meta[0]
+            }
+        })
 
         // add current extent to the URL hash
         let hash = new L.Hash(map)
@@ -36,16 +42,19 @@
         // add map title and description
         var title = new L.Control({'position':'topleft'})
         title.onAdd = function (map) {
-            this._div = L.DomUtil.create('div', 'info')
-            this.update()
-            return this._div
-        }
-        title.update = function () {
-            this._div.innerHTML = `
-            <h2>Cornell Campus Tree Map</h2>
-            <p>This map is based on data from the <a target="_blank" href="https://cugir.library.cornell.edu/catalog/cugir-009100">2019 Campus Tree Inventory</a>.</p>
-            <p>Point colors indicate the genus of the tree.</p>
+            let div = L.DomUtil.create('div', 'info')
+            div.innerHTML = `
+                <h2>Cornell Campus Tree Map</h2>
+                <p>This map is based on data from the <a target='_blank' href='https://cugir.library.cornell.edu/catalog/cugir-009100'>2019 Campus Tree Inventory</a>.</p>
+                <p>Point colors indicate the genus of the tree.</p>
+                <p>Search by species:
+                    <input type='text' id='q' onchange='searchq()' />
+                    <button onclick='clearq()'>reset</button>
+                </p>
+                <p id='summary'></p>
             `
+            L.DomEvent.disableClickPropagation(div)
+            return div
         }
         title.addTo(map)
         
@@ -54,21 +63,25 @@
             position: 'topleft'
         }).addTo(map)
 
-        // basemap
-        map.createPane('pane_nys_2023')
-        map.getPane('pane_nys_2023').style.zIndex = 400
+        // NYS imagery basemap
         var layer_nys_2023 = L.tileLayer.wms('https://orthos.its.ny.gov/arcgis/services/wms/2023/MapServer/WMSServer', {
             layers: '0',
-            pane: 'pane_nys_2023',
             opacity: 0.7,
             attribution: 'Basemap imagery (2023) from <a href="https://gis.ny.gov/orthoimagery">New York State</a>',
-            minZoom: 15,
+            minZoom: 9,
             maxZoom: 21,
-            minNativeZoom: 15,
+            minNativeZoom: 9,
             maxNativeZoom: 19
-        })
-        map.addLayer(layer_nys_2023)
+        }).addTo(map)
 
+        // Positron basemap
+        let layer_positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
+            attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+            minZoom: 0
+        }).addTo(map)
+    
 /*
         map.createPane('pane_esri_imagery')
         map.getPane('pane_esri_imagery').style.zIndex = 400
@@ -83,6 +96,15 @@
         })
         map.addLayer(layer_esri_imagery)
 */
+
+        let layer_control = map.addControl(L.control.layers(
+            {
+                "NYS aerial photos": layer_nys_2023,
+                "Positron": layer_positron
+            }, null, {
+                collapsed: false
+            }
+        ));
 
         // mustache template for the info displayed when hovering over a tree
         let trees_tooltip_template = `
@@ -125,14 +147,14 @@
             return {
                 radius: calcRadius(feature.properties['dbh']),
                 opacity: 1,
-                color: '#fff',
+                color: '#000',
                 fillColor: c,
                 dashArray: '',
                 lineCap: 'butt',
                 lineJoin: 'miter',
-                weight: 0.5,
+                weight: 1.0,
                 fill: true,
-                fillOpacity: 1
+                fillOpacity: 1,
             }
         }
 
@@ -159,7 +181,7 @@
                             // highlight point on hover
                             .on('mouseover', function () {
                                 this.setStyle({
-                                    weight: 1
+                                    weight: 2
                                 })
                             })
                             .on('mouseout', function () {
@@ -169,16 +191,22 @@
                             })
                         }
                     })
-                    map.addLayer(csv_layer)
                     map.on('zoomend', function() {
-                    // thinner stroke when zoomed out, so we can still see the color
-                    csv_layer.eachLayer((f) => {
-                        f.setStyle({
-                        radius: calcRadius(f.feature.properties['dbh'])
+                        // thinner stroke when zoomed out, so we can still see the color
+                        csv_layer.eachLayer((f) => {
+                            f.setStyle({
+                            radius: calcRadius(f.feature.properties['dbh'])
+                            })
                         })
                     })
-                    })
-                    map.setZoom(19)
+                    map.addLayer(csv_layer)
+                    //map.setZoom(19)
+                    
+                    // check for query
+                    if (query) {
+                        document.getElementById('q').value = decodeURIComponent(query).replace(/\+/g, ' ')
+                        searchq()
+                    }
                 })
                 else {
                     console.log('error loading csv data', response)
@@ -186,24 +214,36 @@
             })
         }
 
-        function search(q) {
-            csv_layer.eachLayer((f) => {
-                q = q.toLowerCase()
-                let p = f.feature.properties
-                let fulltext = [p.botanic, p.common].join(' ').toLowerCase()
-                if (fulltext.search(q) > -1) {
-                    f.addTo(map)
-                    f.setStyle({
-                        fillColor: '#0f0'
-                    })
-                }
-                else {
-                    f.remove()
-                }
-            })
+        function searchq() {
+            let q = document.getElementById('q').value
+            hash.setHashMeta([q.replace(/[^\w\s]+/g, '')])
+            if (q.length > 0 || 1) {
+                let count = 0
+                csv_layer.eachLayer((f) => {
+                    q = q.toLowerCase()
+                    let p = f.feature.properties
+                    let fulltext = [p.botanic, p.common].join(' ').toLowerCase()
+                    if (fulltext.search(q) > -1) {
+                        f.addTo(map)
+                        count++
+                    }
+                    else {
+                        f.remove()
+                    }
+                })
+                document.getElementById('summary').innerHTML = `${count} trees` + (q ? ` matching '${q}'` : '')
+            }
         }
-        
+
+        function clearq() {
+            let inp = document.getElementById('q')
+            inp.value = ''
+            searchq()
+            inp.focus()
+        }
+
         loadCSV('data/trees-2019.csv')
+
         </script>
     </body>
 </html>
