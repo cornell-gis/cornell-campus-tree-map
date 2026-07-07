@@ -8,14 +8,16 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/custom.css">
+        <link rel="stylesheet" href="css/L.Control.Basemaps.css">
         <title>Cornell Campus Tree Map</title>
     </head>
     <body>
         <div id="map"></div>
-        <script src="js/leaflet.js"></script>
+        <script src="js/leaflet-1.9.4.js"></script>
+        <script src="js/L.Control.Basemaps-min.js"></script>
+        <script src="js/leaflet-hash-plus.js"></script>
         <script src="js/leaflet.geocsv.js"></script>
         <script src="js/mustache-4.2.0.min.js"></script>
-        <script src="js/leaflet-hash-plus.js"></script>
         <script>
         let csv_layer
         let query = ''
@@ -23,16 +25,14 @@
         let map = L.map('map', {
             zoomControl:false, // we'll add it below, after the title
             maxZoom:21,
-            minZoom:14
+            minZoom:15
         })
+
         // default to view of Ag Quad
         map.setView([42.45, -76.48], 16)
-        map.attributionControl.setPrefix('')
+        map.attributionControl.setPrefix('Basemap')
 
-// also add layer switcher button like GRE localhost
-
-
-
+        // check the URL hash for a query
         map.on('hashmetainit', function(state) {
             if (state.meta.length > 0) {
                 query = state.meta[0]
@@ -66,23 +66,17 @@
             position: 'topleft'
         }).addTo(map)
 
-        // NYS imagery basemap
-        var layer_nys_2023 = L.tileLayer.wms('https://orthos.its.ny.gov/arcgis/services/wms/2023/MapServer/WMSServer', {
-            layers: '0',
-            opacity: 0.7,
-            attribution: 'Basemap imagery (2023) from <a href="https://gis.ny.gov/orthoimagery">New York State</a>',
-            minZoom: 9,
+        var esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             maxZoom: 21,
-            minNativeZoom: 9,
-            maxNativeZoom: 19
-        }).addTo(map)
+            opacity: 0.5
+        })
 
         // Positron basemap
-        let layer_positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
+        let positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
             attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
-            maxZoom: 20,
-            minZoom: 0
+            maxZoom: 21
         }).addTo(map)
     
 /*
@@ -100,14 +94,12 @@
         map.addLayer(layer_esri_imagery)
 */
 
-        let layer_control = map.addControl(L.control.layers(
-            {
-                "NYS aerial photos": layer_nys_2023,
-                "Positron": layer_positron
-            }, null, {
-                collapsed: false
-            }
-        ));
+        map.addControl(L.control.basemaps({
+            basemaps: [ positron, esri_WorldImagery ],
+            tileX: 1177,
+            tileY: 1513,
+            tileZ: 12
+        }));
 
         // mustache template for the info displayed when hovering over a tree
         let trees_tooltip_template = `
@@ -206,7 +198,7 @@
                     //map.setZoom(19)
                     
                     // check for query
-                    if (orighash.match(/^#\w.*$/)) {
+                    if (orighash.match(/^#[a-z].*$/i)) {
                         query = orighash.substr(1)
                     }
                     if (query) {
