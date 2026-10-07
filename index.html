@@ -30,7 +30,7 @@
 
         // default to view of Ag Quad
         map.setView([42.45, -76.48], 16)
-        map.attributionControl.setPrefix('Basemap')
+        map.attributionControl.setPrefix('')
 
         // check the URL hash for a query
         map.on('hashmetainit', function(state) {
@@ -67,32 +67,27 @@
         }).addTo(map)
 
         var esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            attribution: 'Basemap Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             maxZoom: 21,
             opacity: 0.5
         })
 
-        // Positron basemap
-        let positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}' + (L.Browser.retina ? '@2x.png' : '.png'), {
-            attribution:'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 21
-        }).addTo(map)
-    
-/*
-        map.createPane('pane_esri_imagery')
-        map.getPane('pane_esri_imagery').style.zIndex = 400
-        var layer_esri_imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            pane: 'pane_esri_imagery',
-            opacity: 1,
-            attribution: 'Basemap imagery from <a href="https://arcgis.com/">Esri</a>',
-            minZoom: 15,
+        /*
+        var google_streets = L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            attribution: '<a target="_blank" href="https://about.google/brand-resource-center/products-and-services/geo-guidelines/">Basemap by Google</a>',
             maxZoom: 21,
-            minNativeZoom: 15,
-            maxNativeZoom: 19
-        })
-        map.addLayer(layer_esri_imagery)
-*/
+            opacity: 0.5
+        });
+        */
+
+        let positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2v74_2_b3851fa054828510fc4e0106', {
+            maxZoom: 19,
+            minZoom: 4,
+            opacity: 1,
+            attribution: 'Basemap &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://carto.com/location-data-services/basemaps/">Carto</a>',
+            subdomains: 'abcd'
+            }).addTo(map)
+
 
         map.addControl(L.control.basemaps({
             basemaps: [ positron, esri_WorldImagery ],
